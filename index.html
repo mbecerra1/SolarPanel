@@ -19,7 +19,7 @@
     <script src="https://js.arcgis.com/4.30/"></script>
 
     <script>
-      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer","esri/widgets/Legend","esri/widgets/LayerList"], (Map,MapView,FeatureLayer,Legend,LayerList) => {
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer","esri/widgets/Legend","esri/widgets/LayerList","esri/Color","esri/widgets/Expand"], (Map,MapView,FeatureLayer,Legend,LayerList,Color, Expand) => {
         const map = new Map({
           basemap: "dark-gray",
         });
@@ -32,24 +32,41 @@
         });
         
         const template = {
-          title: "Solar Panel",
-          content: [
-            {
-              // It is also possible to set the fieldInfos outside of the content
-              // directly in the popupTemplate. If no fieldInfos is specifically set
-              // in the content, it defaults to whatever may be set within the popupTemplate.
-              type: "fields",
-              fieldInfos: [
-                {
-                  fieldName: "date_built",
-                  label: "Date Build"
-                },
+        title: "Solar Panel",
+        content: [
+          {
+            // It is also possible to set the fieldInfos outside of the content
+            // directly in the popupTemplate. If no fieldInfos is specifically set
+            // in the content, it defaults to whatever may be set within the popupTemplate.
+            type: "fields",
+            fieldInfos: [
+              {
+                fieldName: "date_built",
+                label: "Date Built"
+              },
               {
                 fieldName: "solar_area",
-                label:"Solar Area"
-              },
+                label: "Solar Area"
+              }
             ]
-        }]};
+          },
+          {
+            type: "media",
+            mediaInfos: [
+              {
+                title: "<b>Land Cover Classes</b>",
+                type: "column-chart",
+                caption: "Area in Square Meters of LCMAP Land Cover Classes Surrounding Solar Panel",
+                value: {
+                  fields: ["forest", "wetland", "developed", "water", "grassland", "unknown", "agriculture", "snow", "barren"],
+                  tooltipField: "land_cover",
+                  statisticType: "sum"
+                }
+              }
+            ]
+          }
+        ]
+        };
 
 
         view.when(() => {
@@ -72,50 +89,71 @@
           
             // Add widget to the bottom right corner of the view
             view.ui.add(legend, "bottom-right");
+          
+        
             
         });
 
-        const colors = ["#d92b30", "#3cccb4", "#ffdf3c"];
+                      const colors = [
+                "#d92b30", "#3cccb4", "#ffdf3c", "#4b8bf5", "#8e44ad", "#2ecc71", "#f39c12",
+                "#e74c3c", "#16a085", "#f1c40f", "#9b59b6", "#34495e"
+              ];
 
-        const commonProperties = {
-            type: "simple-fill",
-            outline:{
-              width:0
-            }
-          };
+              const commonProperties = {
+                type: "simple-fill",
+                outline: {
+                  width: 0
+                }
+              };
 
-          const year2011 = {
-                      ...commonProperties,
-                      color: colors[0]
-                    };
-          const year2022 = {
-                      ...commonProperties,
-                      color: colors[1]
-                    };
-    
-          const otheryr = {
-                      ...commonProperties,
-                      color: colors[2]
-                    };        
+              // Define symbols for each year
+              const year2011 = { ...commonProperties, color: colors[0] };
+              const year2012 = { ...commonProperties, color: colors[1] };
+              const year2013 = { ...commonProperties, color: colors[2] };
+              const year2014 = { ...commonProperties, color: colors[3] };
+              const year2015 = { ...commonProperties, color: colors[4] };
+              const year2016 = { ...commonProperties, color: colors[5] };
+              const year2017 = { ...commonProperties, color: colors[6] };
+              const year2018 = { ...commonProperties, color: colors[7] };
+              const year2019 = { ...commonProperties, color: colors[8] };
+              const year2020 = { ...commonProperties, color: colors[9] };
+              const year2021 = { ...commonProperties, color: colors[10] };
+              const year2022 = { ...commonProperties, color: colors[11] };
 
-          const yrRenderer = {
-            type: "unique-value", // autocasts as new UniqueValueRenderer()
-            legendOptions: {
-              title: "Built Year"
-            },
-            defaultSymbol: otheryr,
-            defaultLabel: "Other Year",
-            field: "year",
+              // Define default symbol for other years
+              const otheryr = { ...commonProperties, color: colors[2] };  // Use color for any year not listed
 
-            uniqueValueInfos: [
-              {
-                value: "2011", // code for interstates/freeways
-                symbol: year2011,
-                label: "2011"
-              },]
+              // Map years to symbols
+              const yearSymbols = {
+                "2011": year2011,
+                "2012": year2012,
+                "2013": year2013,
+                "2014": year2014,
+                "2015": year2015,
+                "2016": year2016,
+                "2017": year2017,
+                "2018": year2018,
+                "2019": year2019,
+                "2020": year2020,
+                "2021": year2021,
+                "2022": year2022,
+              };
 
-            };
-    const baseLayer = new FeatureLayer({
+                // Create the renderer
+                const yrRenderer = {
+                  type: "unique-value", // autocasts as new UniqueValueRenderer()
+                  legendOptions: {
+                    title: "Built Year"
+                  },
+                  field: "year",  // Field that holds the year value
+                  uniqueValueInfos: Object.keys(yearSymbols).map(year => ({
+                    value: year,  // "2011", "2012", etc.
+                    symbol: yearSymbols[year],  // Corresponding symbol for the year
+                    label: year  // Display the year as label
+                  }))
+                };
+
+      const baseLayer = new FeatureLayer({
           portalItem: {
           id: "a171604da3dc42b0befc156d8b23b9d5"
           },
